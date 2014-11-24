@@ -1,0 +1,8 @@
+set terminal gif size 800,600 animate delay 10
+set output 'a.plt'
+stats 'datafile0' nooutput
+set xrange [-2000:2001]
+set yrange [-2000:2001]
+do for [i=1:int(STATS_blocks)] {
+	plot 'datafile0' index (i-1) using 2:3 with circle lc rgb 'red' title 'Processeur0, Particule0', 'datafile1' index (i-1) using 2:3 with circle lc rgb 'green' title 'Processeur1, Particule0', 'datafile2' index (i-1) using 2:3 with circle lc rgb 'blue' title 'Processeur2, Particule0', 'datafile3' index (i-1) using 2:3 with circle lc rgb 'orange' title 'Processeur3, Particule0'
+}
