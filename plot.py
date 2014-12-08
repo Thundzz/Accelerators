@@ -28,7 +28,12 @@ def Gen_RandLine(length, dims=2) :
 def readfile():
     f = open('datafile')
     lines = f.readlines()
-    points = [[],[],[]]
+    nbParticles = 0
+    points = []
+    for i in range(1, len(lines)) :
+    	if(lines[i].split(" ")[0] == '\n'):
+    		break
+    	points.append([])
     for i in range(1, len(lines)) :
         line = lines[i]
         line= line.split(" ")
