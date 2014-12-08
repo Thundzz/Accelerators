@@ -95,7 +95,7 @@ void pset_init_rand(pset * s)
 		s->m[i] = 1.0e10;
 		s->pos[i] = MIN_RAND + rand()%(MAX_RAND-MIN_RAND);
 		s->pos[i+size] = MIN_RAND + rand()%(MAX_RAND-MIN_RAND);
-		s->pos[i+2*size] = 0/*MIN_RAND + rand()%(MAX_RAND-MIN_RAND)*/;
+		s->pos[i+2*size] = MIN_RAND + rand()%(MAX_RAND-MIN_RAND);
 		s->spd[i] = 0;
 		s->spd[i+size] = 0;
 		s->spd[i+2*size] = 0;
