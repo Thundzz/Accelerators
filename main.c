@@ -25,7 +25,7 @@ int main()
 		{
 			fprintf(fichier, 
 			"%d %g %g %g\n",
-			j, s->pos[j], s->pos[j+1], s->pos[j+2]);
+			j, s->pos[j], s->pos[j+NBPAR], s->pos[j+2*NBPAR]);
 		}
 		if(i!= NBITER -1)
 			fprintf(fichier, "\n\n");
