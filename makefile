@@ -12,6 +12,9 @@ test: $(TEST)
 send:
 	scp * formation:GPU/
 
+cuda:
+	nvcc -deviceemu cuda_nbody.cu -o cuda_nbody
+
 plot:
 	gnuplot plot.plt
 

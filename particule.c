@@ -9,6 +9,7 @@
 #include <float.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <omp.h>
 
 static int SEEDED =0;
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))

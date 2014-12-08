@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #define NBITER 100
-#define NBPAR 3
+#define NBPAR 10
 
 
 /* MDTSC */
