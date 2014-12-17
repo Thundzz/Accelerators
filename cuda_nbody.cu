@@ -11,8 +11,9 @@
 #include <unistd.h>
 #include <omp.h>
 
-#define NBITER 100
+#define NBITER 1
 #define BLOCKSIZE 16
+#define GRIDDIM 32
 
 static int SEEDED =0;
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -165,8 +166,8 @@ __device__ void intensity(double m, double d, double * res)
 
 __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 {
-	unsigned int idx = threadIdx.x;
-
+	unsigned int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	
 	int j;
 	double d, inten1, inten2;
 	int size = *n;
@@ -209,7 +210,7 @@ int main(int argc, char ** argv)
 	pset *s = pset_alloc(NBPAR);
 	pset_init_orbit(s);
 
-	pset_print(s);
+	/*pset_print(s);*/
 
 	int* nb;
 	double* acc, *spd, *pos, *m;
@@ -226,27 +227,27 @@ int main(int argc, char ** argv)
 	cudaMemcpy(m, s->m, NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 
 	dim3 dimBlock( BLOCKSIZE, 1 );
-	dim3 dimGrid( 1, 1 );
+	dim3 dimGrid( GRIDDIM, GRIDDIM );
 
 	FILE * fichier =fopen("datafile", "w+");
-	fprintf(fichier, "#particule X Y Z\n");
+	/*fprintf(fichier, "#particule X Y Z\n");*/
 	nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
 	cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < NBITER ; ++i)
 	{
 		nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
 		cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
-		for (int j = 0; j < NBPAR; ++j)
+		/*for (int j = 0; j < NBPAR; ++j)
 		{
 			fprintf(fichier, 
 			"%d %g %g %g\n",
 			j, s->pos[j], s->pos[j+NBPAR], s->pos[j+2*NBPAR]);
 		}
 		if(i!= NBITER -1)
-			fprintf(fichier, "\n\n");
+			fprintf(fichier, "\n\n");*/
 	}
 
-	pset_print(s);
+	/*pset_print(s);*/
 	
 
 	fclose(fichier);

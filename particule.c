@@ -167,7 +167,6 @@ void update_acc(pset* s)
 	int i, j;
 	double d, inten1, inten2;
 	int size = s->nb;
-
 	for (i = 0; i < size; ++i)
 	{
 		for (j = i+1; j < size; ++j)
