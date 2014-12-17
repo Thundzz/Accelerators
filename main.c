@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#define NBITER 1
+#define NBITER 200
 
 
 /* MDTSC */
@@ -21,18 +21,18 @@ int main(int argc, char ** argv)
 	/*pset_print(s);*/
 
 	FILE * fichier =fopen("datafile", "w+");
-	/*fprintf(fichier, "#particule X Y Z\n");*/
+	fprintf(fichier, "#particule X Y Z\n");
 	for (int i = 0; i < NBITER ; ++i)
 	{
 		pset_step(s, dt);
-		/*for (int j = 0; j < NBPAR; ++j)
+		for (int j = 0; j < NBPAR; ++j)
 		{
 			fprintf(fichier, 
 			"%d %g %g %g\n",
 			j, s->pos[j], s->pos[j+NBPAR], s->pos[j+2*NBPAR]);
 		}
 		if(i!= NBITER -1)
-			fprintf(fichier, "\n\n");*/
+			fprintf(fichier, "\n\n");
 	}
 
 	/*pset_print(s);*/

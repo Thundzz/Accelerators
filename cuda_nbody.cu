@@ -11,7 +11,7 @@
 #include <unistd.h>
 #include <omp.h>
 
-#define NBITER 1
+#define NBITER 100
 #define BLOCKSIZE 16
 #define GRIDDIM 32
 
@@ -163,17 +163,27 @@ __device__ void intensity(double m, double d, double * res)
 {
 	*res = (CONST_GRAV * m / (d*d*d));
 }
+ __device__ int getGlobalIdx_2D_2D()
+{
+	int blockId = blockIdx.x + blockIdx.y * gridDim.x; 
+	int threadId = blockId * (blockDim.x * blockDim.y) + (threadIdx.y * blockDim.x) + threadIdx.x;
+	return threadId;
+}
 
 __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 {
-	unsigned int idx = blockDim.x * blockIdx.x + threadIdx.x;
-	
-	int j;
+	unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
 	double d, inten1, inten2;
-	int size = *n;
+	int size = *n, j;
 	double dt = 100.0;
 	if(idx >  size)
 		return;
+
+
+	acc[idx] = 0 ; 
+	acc[idx+size] = 0;
+	acc[idx+2*size] = 0;
+
 	for (j = idx+1; j < size; ++j)
 	{
 		distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
@@ -214,7 +224,7 @@ int main(int argc, char ** argv)
 
 	int* nb;
 	double* acc, *spd, *pos, *m;
-	cudaMalloc((void**)&nb, 1*sizeof(int));
+	cudaMalloc((void**)&nb,  1*sizeof(int));
 	cudaMalloc((void**)&acc, 3*NBPAR*sizeof(double));
 	cudaMalloc((void**)&spd, 3*NBPAR*sizeof(double));
 	cudaMalloc((void**)&pos, 3*NBPAR*sizeof(double));
@@ -226,25 +236,25 @@ int main(int argc, char ** argv)
 	cudaMemcpy(pos, s->pos, 3*NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 	cudaMemcpy(m, s->m, NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 
-	dim3 dimBlock( BLOCKSIZE, 1 );
-	dim3 dimGrid( GRIDDIM, GRIDDIM );
+	dim3 dimBlock( 1024, 1 );
+	dim3 dimGrid(  32, 1 );
 
 	FILE * fichier =fopen("datafile", "w+");
-	/*fprintf(fichier, "#particule X Y Z\n");*/
+	fprintf(fichier, "#particule X Y Z\n");
 	nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
 	cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < NBITER ; ++i)
 	{
 		nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
 		cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
-		/*for (int j = 0; j < NBPAR; ++j)
+		for (int j = 0; j < NBPAR; ++j)
 		{
 			fprintf(fichier, 
 			"%d %g %g %g\n",
 			j, s->pos[j], s->pos[j+NBPAR], s->pos[j+2*NBPAR]);
 		}
 		if(i!= NBITER -1)
-			fprintf(fichier, "\n\n");*/
+			fprintf(fichier, "\n\n");
 	}
 
 	/*pset_print(s);*/

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <omp.h>
 
+
 static int SEEDED =0;
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -167,6 +168,14 @@ void update_acc(pset* s)
 	int i, j;
 	double d, inten1, inten2;
 	int size = s->nb;
+	#pragma omp parallel for private(i) schedule(static)
+	for (i = 0; i < size; ++i)
+	{
+		s->acc[i] = 0 ; 
+		s->acc[i+size] = 0;
+		s->acc[i+2*size] = 0;
+	}
+	#pragma omp parallel for private(i) schedule(static)
 	for (i = 0; i < size; ++i)
 	{
 		for (j = i+1; j < size; ++j)

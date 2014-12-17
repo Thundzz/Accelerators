@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS= -W -Wall -O2 -std=c99
-LDFLAGS= -W -Wall -O2 -lm
+CFLAGS= -W -Wall -O2 -std=c99  -fopenmp
+LDFLAGS= -W -Wall -O2 -lm -fopenmp
 EXEC=main.out
 BENCH=
 TEST=
