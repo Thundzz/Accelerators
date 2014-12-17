@@ -182,7 +182,11 @@ __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 	acc[idx] = 0; 
 	acc[idx+size] = 0;
 	acc[idx+2*size] = 0;
-
+	/* ATTENTION !! En fait, ça ne marche pas de faire ça. */
+	/* En effet: On touche à acc[j], alors que acc[j] s'est peut être 
+	   déjà mis à jour au niveau de la position (D'ailleurs il y a 
+	   de grandes chances que ça soit le cas
+	   vu qu'il a moins d'opérations à faire.)*/
 	for (j = idx+1; j < size; ++j)
 	{
 		distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
