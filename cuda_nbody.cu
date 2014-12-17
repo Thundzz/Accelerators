@@ -9,9 +9,8 @@
 #include <float.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <omp.h>
 
-#define NBITER 100
+#define NBITER 300
 #define BLOCKSIZE 16
 #define GRIDDIM 32
 
@@ -172,15 +171,15 @@ __device__ void intensity(double m, double d, double * res)
 
 __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 {
-	unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	unsigned int idx = blockDim.x* blockIdx.x  + threadIdx.x;
 	double d, inten1, inten2;
-	int size = *n, j;
+	int j;
+	int size = *n;
 	double dt = 100.0;
 	if(idx >  size)
 		return;
 
-
-	acc[idx] = 0 ; 
+	acc[idx] = 0; 
 	acc[idx+size] = 0;
 	acc[idx+2*size] = 0;
 
@@ -236,8 +235,8 @@ int main(int argc, char ** argv)
 	cudaMemcpy(pos, s->pos, 3*NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 	cudaMemcpy(m, s->m, NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 
-	dim3 dimBlock( 1024, 1 );
-	dim3 dimGrid(  32, 1 );
+	dim3 dimBlock( BLOCKSIZE, 1);
+	dim3 dimGrid(  1,  1);
 
 	FILE * fichier =fopen("datafile", "w+");
 	fprintf(fichier, "#particule X Y Z\n");
