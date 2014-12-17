@@ -10,13 +10,14 @@ all: $(TEST) $(BENCH) $(EXEC)
 test: $(TEST)
 
 send:
-	scp * formation:GPU/
+	scp * formation:~/accelerateur/
+get:
+	scp formation:~/accelerateur/datafile .
+plot:
+	python plot.py
 
 cuda:
 	nvcc -deviceemu cuda_nbody.cu -o cuda_nbody
-
-plot:
-	gnuplot plot.plt
 
 	
 main.out: particule.o main.o

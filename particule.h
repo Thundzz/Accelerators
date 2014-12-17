@@ -38,7 +38,7 @@ void pset_free(pset * set);
 **/
 void pset_init_rand(pset * s);
 
-
+void pset_init_orbit(pset *s);
 
 /** Affiche les infos sur les particules d'un ensemble
 **/

@@ -12,7 +12,7 @@
 #include <omp.h>
 
 #define NBITER 100
-#define NBPAR 3
+#define BLOCKSIZE 16
 
 static int SEEDED =0;
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -108,6 +108,44 @@ void pset_init_rand(pset * s)
 		s->acc[i+2*size] = 0;
 	}
 }
+/* Calcule la vitesse de satellisation */
+double v_orbit(double mass, double distance)
+{
+	return sqrt(CONST_GRAV*mass/distance);
+}
+
+void pset_init_orbit(pset *s)
+{
+	seed();
+	double dmin= 200, distance;
+	int size = s->nb;
+	s->pos[0 ] = 0;
+	s->pos[0 +size] = 0;
+	s->pos[0 +2*size] = 0;
+	s->spd[0 ] = 0;
+	s->spd[0 +size] = 0;
+	s->spd[0 +2*size] = 0;
+	s->acc[0 ] = 0;
+	s->acc[0 + size] = 0;
+	s->acc[0 +2*size] = 0;
+
+	s->m[0] = 1e10;
+
+	for (int i = 1; i < size; ++i)
+	{
+		distance = dmin*i +  rand()% 50;
+		s->m[i] = s->m[0] /20000;
+		s->pos[i] = s->pos[0] -distance;
+		s->pos[i+size] = 0;
+		s->pos[i+2*size] = 0;
+		s->spd[i] = 0;
+		s->spd[i+size]= v_orbit(s->m[0], distance);
+		s->spd[i+2*size]= 0;
+		s->acc[i] = 0;
+		s->acc[i+size] = 0;
+		s->acc[i+2*size] = 0;
+	}
+}
 
 /** Prend en argument les masses de deux particules, la distance entre
  * ces particules et retourne l'intensité de la force gravitationnelle
@@ -132,29 +170,25 @@ __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 	int j;
 	double d, inten1, inten2;
 	int size = *n;
-	double dt = 500.0;
-
-	if (m[idx] != 0)
+	double dt = 100.0;
+	if(idx >  size)
+		return;
+	for (j = idx+1; j < size; ++j)
 	{
-		for (j = idx+1; j < size; ++j)
-		{
-			if(m[j] != 0)
-				distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
-						 pos[j+ size], pos[idx+ 2*size], &d);
-			else 
-				d = DBL_MAX;
+		distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
+				 pos[j+ size], pos[j+ 2*size], &d);
 
-			intensity(m[j], d, &inten1);
-			acc[idx]+= inten1 *(pos[j] - pos[idx]); 
-			acc[idx+size]+= inten1 *(pos[j+size] - pos[idx+size]);
-			acc[idx+2*size]+= inten1 *(pos[j+2*size] - pos[idx+2*size]);
+		intensity(m[j], d, &inten1);
+		acc[idx]+= inten1 *(pos[j] - pos[idx]); 
+		acc[idx+size]+= inten1 *(pos[j+size] - pos[idx+size]);
+		acc[idx+2*size]+= inten1 *(pos[j+2*size] - pos[idx+2*size]);
 
-			intensity(m[idx], d, &inten2);
-			acc[j]-= inten2 *(pos[j] - pos[idx]);  
-			acc[j+size]-= inten2 *(pos[j+size] - pos[idx+size]);
-			acc[j+2*size]-= inten2 *(pos[j+2*size] - pos[idx+2*size]);
-		}
+		intensity(m[idx], d, &inten2);
+		acc[j]-= inten2 *(pos[j] - pos[idx]);  
+		acc[j+size]-= inten2 *(pos[j+size] - pos[idx+size]);
+		acc[j+2*size]-= inten2 *(pos[j+2*size] - pos[idx+2*size]);
 	}
+
 	pos[idx]+= dt* spd[idx] + dt*dt/2 * acc[idx];
 	pos[idx + size]+= dt* spd[idx+ size] + dt*dt/2 * acc[idx+size];
 	pos[idx + 2*size]+= dt* spd[idx+ 2*size] + dt*dt/2 * acc[idx+2*size];
@@ -165,10 +199,15 @@ __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 }
 
 
-int main()
+int main(int argc, char ** argv)
 {
+	if(argc != 2){
+		fprintf(stderr, "Enter the number of particles\n");
+		exit(EXIT_FAILURE);
+	}
+	int NBPAR = atoi(argv[1]);
 	pset *s = pset_alloc(NBPAR);
-	pset_init_rand(s);
+	pset_init_orbit(s);
 
 	pset_print(s);
 
@@ -186,14 +225,16 @@ int main()
 	cudaMemcpy(pos, s->pos, 3*NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 	cudaMemcpy(m, s->m, NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 
-	int dimBlock = 1;
-
+	dim3 dimBlock( BLOCKSIZE, 1 );
+	dim3 dimGrid( 1, 1 );
 
 	FILE * fichier =fopen("datafile", "w+");
 	fprintf(fichier, "#particule X Y Z\n");
+	nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
+	cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
 	for (int i = 0; i < NBITER ; ++i)
 	{
-		nbody<<<1, dimBlock>>>(nb, acc, spd, pos, m);
+		nbody<<< dimGrid, dimBlock >>>(nb, acc, spd, pos, m);
 		cudaMemcpy(s->pos, pos, 3*NBPAR*sizeof(double), cudaMemcpyDeviceToHost);
 		for (int j = 0; j < NBPAR; ++j)
 		{

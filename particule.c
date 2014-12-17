@@ -106,6 +106,45 @@ void pset_init_rand(pset * s)
 	}
 }
 
+/* Calcule la vitesse de satellisation */
+double v_orbit(double mass, double distance)
+{
+	return sqrt(CONST_GRAV*mass/distance);
+}
+
+void pset_init_orbit(pset *s)
+{
+	seed();
+	double dmin= 200, distance;
+	int size = s->nb;
+	s->pos[0 ] = 0;
+	s->pos[0 +size] = 0;
+	s->pos[0 +2*size] = 0;
+	s->spd[0 ] = 0;
+	s->spd[0 +size] = 0;
+	s->spd[0 +2*size] = 0;
+	s->acc[0 ] = 0;
+	s->acc[0 + size] = 0;
+	s->acc[0 +2*size] = 0;
+
+	s->m[0] = 1e10;
+
+	for (int i = 1; i < size; ++i)
+	{
+		distance = dmin*i +  rand()% 50;
+		s->m[i] = s->m[0] /20000;
+		s->pos[i] = s->pos[0] -distance;
+		s->pos[i+size] = 0;
+		s->pos[i+2*size] = 0;
+		s->spd[i] = 0;
+		s->spd[i+size]= v_orbit(s->m[0], distance);
+		s->spd[i+2*size]= 0;
+		s->acc[i] = 0;
+		s->acc[i+size] = 0;
+		s->acc[i+2*size] = 0;
+	}
+}
+
 /** Calcule la distance entre deux particules données par leurs
  * coordonnées cartésiennes.
  */
@@ -131,27 +170,21 @@ void update_acc(pset* s)
 
 	for (i = 0; i < size; ++i)
 	{
-		if (s->m[i] != 0)
+		for (j = i+1; j < size; ++j)
 		{
-			for (j = i+1; j < size; ++j)
-			{
-				if(s->m[j] != 0)
-					d = distance(s->pos[i], s->pos[i+ size], s->pos[i+ 2*size],
-								 s->pos[j], s->pos[j+ size], s->pos[i+ 2*size]);
-				else 
-					d = DBL_MAX;
+			d = distance(s->pos[i], s->pos[i+ size], s->pos[i+ 2*size],
+						 s->pos[j], s->pos[j+ size], s->pos[j+ 2*size]);
 
-				inten1 = intensity(s->m[j], d);
-				s->acc[i]+= inten1 *(s->pos[j] - s->pos[i]); 
-				s->acc[i+size]+= inten1 *(s->pos[j+size] - s->pos[i+size]);
-				s->acc[i+2*size]+= inten1 *(s->pos[j+2*size] - s->pos[i+2*size]);
 
-				inten2 = intensity(s->m[i], d);
-				s->acc[j]-= inten2 *(s->pos[j] - s->pos[i]);  
-				s->acc[j+size]-= inten2 *(s->pos[j+size] - s->pos[i+size]);
-				s->acc[j+2*size]-= inten2 *(s->pos[j+2*size] - s->pos[i+2*size]);
-			}
+			inten1 = intensity(s->m[j], d);
+			s->acc[i]+= inten1 *(s->pos[j] - s->pos[i]); 
+			s->acc[i+size]+= inten1 *(s->pos[j+size] - s->pos[i+size]);
+			s->acc[i+2*size]+= inten1 *(s->pos[j+2*size] - s->pos[i+2*size]);
 
+			inten2 = intensity(s->m[i], d);
+			s->acc[j]-= inten2 *(s->pos[j] - s->pos[i]);  
+			s->acc[j+size]-= inten2 *(s->pos[j+size] - s->pos[i+size]);
+			s->acc[j+2*size]-= inten2 *(s->pos[j+2*size] - s->pos[i+2*size]);
 		}
 	}
 }

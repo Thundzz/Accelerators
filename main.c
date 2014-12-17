@@ -1,18 +1,22 @@
 #include "particule.h"
 
 #include <stdio.h>
-
+#include <stdlib.h>
 #define NBITER 100
-#define NBPAR 10
 
 
 /* MDTSC */
 
-int main()
+int main(int argc, char ** argv)
 {
-	double dt = 500.0;
+	if(argc != 2){
+		fprintf(stderr, "Enter the number of particles\n");
+		exit(EXIT_FAILURE);
+	}
+	int NBPAR = atoi(argv[1]);
+	double dt = 200.0;
 	pset *s = pset_alloc(NBPAR);
-	pset_init_rand(s);
+	pset_init_orbit(s);
 
 	pset_print(s);
 
