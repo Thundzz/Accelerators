@@ -17,7 +17,7 @@ plot:
 	python plot.py
 
 cuda:
-	nvcc -deviceemu cuda_nbody.cu -o cuda_nbody
+	nvcc cuda_nbody.cu -o cuda_nbody
 
 	
 main.out: particule.o main.o

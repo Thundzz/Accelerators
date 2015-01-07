@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define NBITER 1000
+#define NBITER 100
 #define BLOCKSIZE 16
 #define GRIDDIM 64
 
@@ -153,7 +153,9 @@ void pset_init_orbit(pset *s)
  */
 
 
-__device__ void distance(double x1, double y1, double z1 , double x2, double y2, double z2, double *res)
+__device__ void distance(double x1, double y1, double z1,
+						 double x2, double y2, double z2,
+						 double *res)
 {
 	*res = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) + (z2-z1)*(z2-z1) );
 }
@@ -172,10 +174,10 @@ __device__ void intensity(double m, double d, double * res)
 __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 {
 	unsigned int idx = blockDim.x* blockIdx.x  + threadIdx.x;
-	double d, inten1, inten2;
+	double d, inten1;
 	int j;
 	int size = *n;
-	double dt = 300.0;
+	double dt = 100.0;
 	if(idx >  size)
 		return;
 
@@ -187,20 +189,18 @@ __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 	   déjà mis à jour au niveau de la position (D'ailleurs il y a 
 	   de grandes chances que ça soit le cas
 	   vu qu'il a moins d'opérations à faire.)*/
-	for (j = idx+1; j < size; ++j)
+	for (j = 0; j < size; ++j)
 	{
-		distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
-				 pos[j+ size], pos[j+ 2*size], &d);
+		if(j != idx)
+		{
+			distance(pos[idx], pos[idx+ size], pos[idx+ 2*size], pos[j],
+					 pos[j+ size], pos[j+ 2*size], &d);
 
-		intensity(m[j], d, &inten1);
-		acc[idx]+= inten1 *(pos[j] - pos[idx]); 
-		acc[idx+size]+= inten1 *(pos[j+size] - pos[idx+size]);
-		acc[idx+2*size]+= inten1 *(pos[j+2*size] - pos[idx+2*size]);
-
-		intensity(m[idx], d, &inten2);
-		acc[j]-= inten2 *(pos[j] - pos[idx]);  
-		acc[j+size]-= inten2 *(pos[j+size] - pos[idx+size]);
-		acc[j+2*size]-= inten2 *(pos[j+2*size] - pos[idx+2*size]);
+			intensity(m[j], d, &inten1);
+			acc[idx]+= inten1 *(pos[j] - pos[idx]); 
+			acc[idx+size]+= inten1 *(pos[j+size] - pos[idx+size]);
+			acc[idx+2*size]+= inten1 *(pos[j+2*size] - pos[idx+2*size]);
+		}
 	}
 
 	pos[idx]+= dt* spd[idx] + dt*dt/2 * acc[idx];
