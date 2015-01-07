@@ -10,9 +10,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define NBITER 300
+#define NBITER 1000
 #define BLOCKSIZE 16
-#define GRIDDIM 32
+#define GRIDDIM 64
 
 static int SEEDED =0;
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
@@ -175,7 +175,7 @@ __global__ void nbody(int* n, double* acc, double* spd, double* pos, double* m)
 	double d, inten1, inten2;
 	int j;
 	int size = *n;
-	double dt = 100.0;
+	double dt = 300.0;
 	if(idx >  size)
 		return;
 
@@ -239,8 +239,8 @@ int main(int argc, char ** argv)
 	cudaMemcpy(pos, s->pos, 3*NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 	cudaMemcpy(m, s->m, NBPAR*sizeof(double), cudaMemcpyHostToDevice);
 
-	dim3 dimBlock( BLOCKSIZE, 1);
-	dim3 dimGrid(  1,  1);
+	dim3 dimBlock(BLOCKSIZE);
+	dim3 dimGrid(GRIDDIM);
 
 	FILE * fichier =fopen("datafile", "w+");
 	fprintf(fichier, "#particule X Y Z\n");

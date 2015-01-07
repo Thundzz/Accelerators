@@ -89,7 +89,7 @@ ax.set_zlabel('Z')
 ax.set_title('3D Test')
 
 # Creating the Animation object
-line_ani = animation.FuncAnimation(fig, update_lines, 100, fargs=(data, lines),
+line_ani = animation.FuncAnimation(fig, update_lines, len(particles[0]), fargs=(data, lines),
                               interval=50, blit=False)
 
 plt.show()
